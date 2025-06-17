@@ -1,9 +1,9 @@
+#include "control.h"
 #include "driver.h"
 #include "zephyr/device.h"
 #include "zephyr/drivers/uart.h"
 #include "zephyr/kernel.h"
 #include "zephyr/sys_clock.h"
-#include "control.h"
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -77,7 +77,7 @@ static float chooseController(struct pendulum_state *pstate, float force,
                               vec4f *k_hac, vec4f *k_hpc, float swing_up_str,
                               struct control_interval *con) {
 
-  if (fabsf(pstate->theta) < con->sx ) {
+  if (fabsf(pstate->theta) < con->sx) {
     if (fabsf(pstate->x) < con->xdist) {
       return compute_control(pstate, force, k_hpc);
     } else {
@@ -88,7 +88,8 @@ static float chooseController(struct pendulum_state *pstate, float force,
   }
 }
 
-static void uart_write(const struct device *odrive, const char *buf, size_t len) {
+static void uart_write(const struct device *odrive, const char *buf,
+                       size_t len) {
   size_t i;
   for (i = 0; i < len; ++i) {
     uart_poll_out(odrive, buf[i]);
@@ -115,6 +116,19 @@ static void set_max_vel(const struct device *odrive, float value) {
   uart_write(odrive, buf, strlen(buf));
 }
 
+void go_to(const struct device *pd, const struct device *odrive,
+           struct sensor_state *sstate, int32_t position) {
+  do {
+    pd_read_api(pd, sstate);
+    if (sstate->cartPosition > position) {
+      set_torque(odrive, -0.2);
+    } else if (sstate->cartPosition < position) {
+      set_torque(odrive, 0.2);
+    }
+  } while (abs(sstate->cartPosition - position) > 16);
+  set_torque(odrive, 0.0);
+}
+
 // for init
 // do not call from main control loop
 void wait(const struct device *dev, struct sensor_state *sstate,
@@ -134,36 +148,36 @@ void wait(const struct device *dev, struct sensor_state *sstate,
   }
 }
 
-static bool close(int32_t v1, int32_t v2){
+static bool close(int32_t v1, int32_t v2) {
 #define threshold 128
-    return abs(v1 - v2) < threshold; 
+  return abs(v1 - v2) < threshold;
 }
 
-int32_t calibrate(const struct device* pd, const struct device* odrive, struct sensor_state* sstate) {
-    init_odrive(odrive);
-    do {
-      pd_read_api(pd, sstate);  
-      set_torque(odrive, 0.2);
-    } while (!sstate->buttons[0]);
-    set_torque(odrive, 0.0);
-    int32_t cart_position = sstate->cartPosition;
+int32_t calibrate(const struct device *pd, const struct device *odrive,
+                  struct sensor_state *sstate) {
+  init_odrive(odrive);
+  do {
+    pd_read_api(pd, sstate);
+    set_torque(odrive, 0.2);
+  } while (!sstate->buttons[0]);
+  set_torque(odrive, 0.0);
+  int32_t cart_position = sstate->cartPosition;
 
-    do {
-      pd_read_api(pd, sstate);  
-      set_torque(odrive, -0.2);
-    } while (!sstate->buttons[1]);
-    set_torque(odrive, 0.0);
-    int32_t cart_position2 = sstate->cartPosition;
-    int32_t center = (cart_position + cart_position2) >> 1ll;
+  do {
+    pd_read_api(pd, sstate);
+    set_torque(odrive, -0.2);
+  } while (!sstate->buttons[1]);
+  set_torque(odrive, 0.0);
+  int32_t cart_position2 = sstate->cartPosition;
+  int32_t center = (cart_position + cart_position2) >> 1ll;
 
-    do {
-        pd_read_api(pd, sstate);
-        set_torque(odrive, 0.2);
-    } while (!close(center, sstate->cartPosition));
-    set_torque(odrive, 0.0);
-    return center;
-  }
-
+  do {
+    pd_read_api(pd, sstate);
+    set_torque(odrive, 0.2);
+  } while (!close(center, sstate->cartPosition));
+  set_torque(odrive, 0.0);
+  return center;
+}
 
 void control(const struct device *pd, const struct device *odrive,
              struct pendulum_state *pstate, struct sensor_state *sstate,
@@ -183,7 +197,8 @@ void control(const struct device *pd, const struct device *odrive,
     timer = K_USEC(control_freq);
     pd_read_api(pd, sstate);
     pendulum_update(pstate, sstate, elapsed, u);
-
+    if(sstate->buttons[0] || sstate->buttons[1])
+        break;
     u = chooseController(pstate, u, &K_HAC, &K_HPC, swing_up_str, con);
     set_torque(odrive, u);
   }

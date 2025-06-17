@@ -22,6 +22,8 @@ struct control_interval {
   float xdist;
 };
 
+void go_to(const struct device* pd, const struct device* odrive, struct sensor_state* sstate, int32_t position); 
+
 void wait(const struct device *dev, struct sensor_state *sstate,
           struct pendulum_state *pstate, float dt, float force);
 

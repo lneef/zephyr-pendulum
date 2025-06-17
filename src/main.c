@@ -4,6 +4,7 @@
 #include "zephyr/devicetree.h"
 #include <stdint.h>
 
+
 int main() { 
     const struct device* pd = DEVICE_DT_GET(DT_NODELABEL(pendulum0));
     const struct device* odrive = DEVICE_DT_GET(DT_NODELABEL(uart1));
@@ -11,10 +12,13 @@ int main() {
     struct pendulum_state pstate = {.k = 1 };
     struct control_interval con = {.ct = 1000, .su = 1000, .weight = 0.997, .xdist = 4.00, .sx = 0.4};
     uint32_t control_freq = 100;
-    calibrate(pd, odrive, &sstate);
+    int32_t center = calibrate(pd, odrive, &sstate);
     wait(pd, &sstate, &pstate, 0.02, 0);
     pd_reset_api(pd);
-    control(pd, odrive, &pstate, &sstate, &con, control_freq);
+    while(1){
+        control(pd, odrive, &pstate, &sstate, &con, control_freq);
+        go_to(pd, odrive, &sstate, center);
+    }
 
     return 0; 
 }
