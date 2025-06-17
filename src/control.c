@@ -173,8 +173,6 @@ void control(const struct device *pd, const struct device *odrive,
   float u = 0.0, swing_up_str = 0.181, elapsed = control_freq, maxVel = 8.0;
   k_timeout_t timer, wait;
   k_timepoint_t left;
-  struct k_sem sem;
-  k_sem_init(&sem, 1, 1);
   set_max_vel(odrive, maxVel);
   set_torque(odrive, 1.0);
   timer = K_USEC(control_freq);
