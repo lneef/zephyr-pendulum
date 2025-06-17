@@ -1,0 +1,13 @@
+/{
+ app {
+        #address-cells = <1>;
+        #size-cells = <1>;
+        pendulum0: pendulum@80000000 {
+            status = "okay";
+            compatible = "pendulum";
+            reg = <0x80000000 0x1000>;
+            label = "pendulum";
+        };
+    };
+};
+
