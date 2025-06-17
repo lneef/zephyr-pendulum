@@ -75,10 +75,9 @@ static float get_swing_up(struct pendulum_state *pstate, float swing_up_str) {
 
 static float chooseController(struct pendulum_state *pstate, float force,
                               vec4f *k_hac, vec4f *k_hpc, float swing_up_str,
-                              struct control_interval *con, bool activate) {
+                              struct control_interval *con) {
 
-  if (fabsf(pstate->theta) < con->sx || activate == 1) {
-    activate = 1;
+  if (fabsf(pstate->theta) < con->sx ) {
     if (fabsf(pstate->x) < con->xdist) {
       return compute_control(pstate, force, k_hpc);
     } else {
@@ -171,17 +170,11 @@ void control(const struct device *pd, const struct device *odrive,
              struct control_interval *con, uint32_t control_freq) {
   vec4f K_HAC = {5.8, 1.6, -855.0, -30.0};
   vec4f K_HPC = {5.8, 2.0, -285.0, -22.0};
-  float u, swing_up_str, elapsed, maxVel;
+  float u = 0.0, swing_up_str = 0.181, elapsed = control_freq, maxVel = 8.0;
   k_timeout_t timer, wait;
   k_timepoint_t left;
   struct k_sem sem;
   k_sem_init(&sem, 1, 1);
-  u = 0.0;
-  swing_up_str = 0.181;
-  elapsed = control_freq;
-  maxVel = 8.0;
-  bool activate = 0;
-
   set_max_vel(odrive, maxVel);
   set_torque(odrive, 1.0);
   timer = K_USEC(control_freq);
@@ -193,8 +186,7 @@ void control(const struct device *pd, const struct device *odrive,
     pd_read_api(pd, sstate);
     pendulum_update(pstate, sstate, elapsed, u);
 
-    u = chooseController(pstate, u, &K_HAC, &K_HPC, swing_up_str, con,
-                         activate);
+    u = chooseController(pstate, u, &K_HAC, &K_HPC, swing_up_str, con);
     set_torque(odrive, u);
   }
 }
