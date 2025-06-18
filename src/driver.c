@@ -18,6 +18,7 @@
 struct pd_data {
   DEVICE_MMIO_RAM
   struct device *dev;
+  mm_reg_t mmio;
 };
 
 struct pd_config {
@@ -25,38 +26,35 @@ struct pd_config {
   int32_t rst[2];
 };
 
-#define DEV_MMIO(ident, device)                                                \
-  volatile struct mmio *ident = (volatile struct mmio *)device->data
-
 static int pd_reset(const struct device *dev) {
-  mm_reg_t mmio = DEVICE_MMIO_GET(dev);
+  struct pd_data* data = (struct pd_data*)dev->data;  
   struct pd_config *cfg = (struct pd_config *)dev->config;
-  sys_write32(cfg->rst[0], mmio + PD_ENC_0_RST);
-  sys_write32(cfg->rst[0], mmio + PD_ENC_1_RST);
+  sys_write32(cfg->rst[0], data->mmio + PD_ENC_0_RST);
+  sys_write32(cfg->rst[0], data->mmio + PD_ENC_1_RST);
   return 0;
 }
 
 static int pd_read(const struct device *dev, struct sensor_state *sstate) {
-  mm_reg_t mmio = DEVICE_MMIO_GET(dev);
-  sstate->cartPosition = sys_read32(mmio + PD_ENC_O_VAL);
-  sstate->pendulumAngle = sys_read32(mmio + PD_ENC_1_VAL);
-  sstate->buttons[0] = sys_read32(mmio + PD_BUT_L);
-  sstate->buttons[1] = sys_read32(mmio + PD_BUT_R);
+  struct pd_data* data = (struct pd_data*)dev->data;
+  sstate->cartPosition = sys_read32(data->mmio + PD_ENC_O_VAL);
+  sstate->pendulumAngle = sys_read32(data->mmio + PD_ENC_1_VAL);
+  sstate->buttons[0] = sys_read32(data->mmio + PD_BUT_L);
+  sstate->buttons[1] = sys_read32(data->mmio + PD_BUT_R);
   return 0;
 }
 
 static int pd_update_threshold(const struct device *dev, int32_t threshold) {
-  mm_reg_t mmio = DEVICE_MMIO_GET(dev);
-  sys_write32(threshold, mmio + PD_ENC_PWM);
+  struct pd_data* data = (struct pd_data*)dev->data;
+  sys_write32(threshold, data->mmio + PD_ENC_PWM);
   return 0;
 }
 
 static int pd_init(const struct device *dev) {
+  struct pd_data* data = (struct pd_data*) dev->data;  
   DEVICE_MMIO_MAP(dev, K_MEM_CACHE_NONE);
-  mm_reg_t mmio = DEVICE_MMIO_GET(dev);
-
-  sys_write32(0, mmio + PD_ENC_0_RST);
-  sys_write32(0, mmio + PD_ENC_1_RST);
+  data->mmio = DEVICE_MMIO_GET(dev);
+  sys_write32(0, data->mmio + PD_ENC_0_RST);
+  sys_write32(0, data->mmio + PD_ENC_1_RST);
   return 0;
 }
 
@@ -64,7 +62,6 @@ static struct pendulum_controller_driver_api pd_api = {.reset = pd_reset,
                                                        .read = pd_read,
                                                        .update_threshold =
                                                            pd_update_threshold};
-
 static struct pd_data pd_data = {0};
 static struct pd_config pd_config = {
     .rst = {0, 0},
