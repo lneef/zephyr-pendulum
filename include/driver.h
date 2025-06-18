@@ -19,10 +19,6 @@ __subsystem struct pendulum_controller_driver_api{
     update_fn update_threshold;
 };
 
-#define CALL_API(name, dev) \
-    const struct pendulum_controller_driver_api* api = (const struct pendulum_controller_driver_api*) dev->api; \
-    api->##name##(dev, sstate); 
-
 static inline void pd_read_api(const struct device* dev, struct sensor_state* sstate){
     const struct pendulum_controller_driver_api* api = (const struct pendulum_controller_driver_api*) dev->api;
     api->read(dev, sstate);
