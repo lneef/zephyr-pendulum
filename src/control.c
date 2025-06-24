@@ -12,6 +12,9 @@
 #include <time.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/sys_clock.h>
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(control, LOG_LEVEL_DBG);
 
 #define M_PI 3.14159265358979323846f
 #define PULSES_PER_MIN (2048 * 4)
@@ -91,6 +94,7 @@ static float chooseController(struct pendulum_state *pstate, float force,
 static void uart_write(const struct device *odrive, const char *buf,
                        size_t len) {
   size_t i;
+  LOG_INF("Writing %s", buf);
   for (i = 0; i < len; ++i) {
     uart_poll_out(odrive, buf[i]);
   }

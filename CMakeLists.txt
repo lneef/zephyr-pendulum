@@ -8,6 +8,5 @@ add_compile_options(-fenable-matrix)
 
 project(control)
 include_directories(${CMAKE_SOURCE_DIR}/include)
-target_sources(app PRIVATE ${CMAKE_SOURCE_DIR}/src/main.c
-                             ${CMAKE_SOURCE_DIR}/src/driver.c
-                          ${CMAKE_SOURCE_DIR}/src/control.c)
+FILE(GLOB app_sources src/*.c)
+target_sources(app PRIVATE ${app_sources})
