@@ -79,4 +79,5 @@ static struct pd_config pd_config = {
     DEVICE_MMIO_ROM_INIT(DT_NODELABEL(pendulum0)),
 };
 DEVICE_DT_DEFINE(DT_NODELABEL(pendulum0), pd_init, NULL, &pd_data, &pd_config,
-                 POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEVICE, &pd_api);
+                 PRE_KERNEL_2, CONFIG_KERNEL_INIT_PRIORITY_DEVICE, &pd_api);
+

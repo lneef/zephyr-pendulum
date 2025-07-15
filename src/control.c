@@ -5,7 +5,6 @@
 #include "zephyr/sys_clock.h"
 #include <math.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -145,8 +144,6 @@ static bool close(int32_t v1, int32_t v2) {
 
 int32_t calibrate(const struct device *pd, struct sensor_state *sstate) {
   init_odrive(pd);
-  int32_t center = 0;
-  /*
   do {
     pd_read_api(pd, sstate);
     set_torque(pd, 0.2);
@@ -166,7 +163,6 @@ int32_t calibrate(const struct device *pd, struct sensor_state *sstate) {
     pd_read_api(pd, sstate);
     set_torque(pd, 0.2);
   } while (!close(center, sstate->cartPosition));
-  */
   set_torque(pd, 0.0);
   return center;
 }
