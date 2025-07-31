@@ -51,8 +51,8 @@ static int pd_read(const struct device *dev, struct sensor_state *sstate) {
   mm_reg_t mmio = DEVICE_MMIO_GET(dev);
   sstate->cartPosition = sys_read32(mmio + PD_ENC_O_VAL);
   sstate->pendulumAngle = sys_read32(mmio + PD_ENC_1_VAL);
-  sstate->buttons[0] = sys_read32(mmio + PD_BUT_L);
-  sstate->buttons[1] = sys_read32(mmio + PD_BUT_R);
+  sstate->buttons[0] = sys_read16(mmio + PD_BUT_L);
+  sstate->buttons[1] = sys_read16(mmio + PD_BUT_R);
   return 0;
 }
 
